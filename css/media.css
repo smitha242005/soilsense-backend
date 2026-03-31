@@ -1,0 +1,121 @@
+@media (max-width: 768px) {
+  nav {
+    padding: 0 1rem;
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .auth-container {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+
+  .auth-bg-text {
+    font-size: 80px;
+  }
+
+  .hero {
+    padding: 3rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .stats-bar {
+    flex-direction: column;
+  }
+
+  .stat-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(160,82,45,0.1);
+    width: 100%;
+  }
+
+  .section {
+    padding: 3rem 1rem;
+  }
+
+  .features-grid,
+  .how-grid,
+  .soil-grid,
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .how-step::after {
+    display: none;
+  }
+
+  .analysis-layout {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .upload-zone,
+  .result-panel {
+    padding: 1.5rem;
+  }
+
+  .upload-actions,
+  .img-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-upload,
+  .btn-sm {
+    width: 100%;
+  }
+
+  .about-section {
+    margin: 0 1rem 2rem;
+    padding: 2rem 1.5rem;
+  }
+
+  #soil-detail-page .detail-hero {
+    height: 220px;
+    padding: 1.5rem;
+  }
+
+  .detail-hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .detail-body {
+    padding: 1rem;
+  }
+
+  .range-indicator {
+    font-size: 0.65rem;
+    min-width: 50px;
+  }
+}
