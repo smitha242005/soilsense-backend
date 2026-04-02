@@ -6,7 +6,7 @@ from PIL import Image
 import io, json, base64, os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 print("Loading model...")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
