@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io, json, base64, os
+import tensorflow as tf
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -11,17 +11,14 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 print("Loading model...")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-keras_path = os.path.join(BASE_DIR, 'best_model.keras')
-h5_path = os.path.join(BASE_DIR, 'best_model.h5')
-
-if os.path.exists(keras_path):
-    model = tf.keras.models.load_model(keras_path)
-elif os.path.exists(h5_path):
-    model = tf.keras.models.load_model(h5_path, compile=False)
-else:
-    raise FileNotFoundError("No model file found!")
-
-print("✅ Model loaded!")
+# Load TFLite model
+interpreter = tf.lite.Interpreter(
+    model_path=os.path.join(BASE_DIR, 'soil_model.tflite')
+)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+print("✅ TFLite Model loaded!")
 
 with open(os.path.join(BASE_DIR, 'class_indices.json')) as f:
     class_indices = json.load(f)
@@ -29,9 +26,17 @@ idx_to_label = {v: k for k, v in class_indices.items()}
 print("Classes:", idx_to_label)
 
 IMG_SIZE = (224, 224)
-from tensorflow.keras.applications.resnet50 import preprocess_input
 
-# ── Soil Info Dictionary ──
+def preprocess_image(img):
+    img = img.resize(IMG_SIZE)
+    arr = np.array(img, dtype=np.float32)
+    # ResNet50 preprocessing
+    arr[..., 0] -= 103.939
+    arr[..., 1] -= 116.779
+    arr[..., 2] -= 123.68
+    arr = arr[..., ::-1]  # RGB to BGR
+    return np.expand_dims(arr, axis=0)
+
 SOIL_INFO = {
     'Alluvial_Soil': {
         'display_name': 'Alluvial Soil',
@@ -62,7 +67,7 @@ SOIL_INFO = {
     },
     'Clay': {
         'display_name': 'Clay Soil',
-        'description': 'Heavy soil with very fine particles. Excellent nutrient content but poor drainage. Sticky when wet and hard when dry.',
+        'description': 'Heavy soil with very fine particles. Excellent nutrient content but poor drainage.',
         'moisture_level': 'High (50-70%)',
         'ideal_moisture': 60,
         'crops': ['Rice', 'Lettuce', 'Cabbage', 'Broccoli', 'Chard', 'Beans'],
@@ -71,7 +76,7 @@ SOIL_INFO = {
     },
     'Laterite_Soil': {
         'display_name': 'Laterite Soil',
-        'description': 'Formed in tropical regions with high rainfall. Rich in iron and aluminum oxides. Soft when wet, hard when dry.',
+        'description': 'Formed in tropical regions with high rainfall. Rich in iron and aluminum oxides.',
         'moisture_level': 'Moderate (35-55%)',
         'ideal_moisture': 45,
         'crops': ['Tea', 'Coffee', 'Cashew', 'Coconut', 'Rubber', 'Pineapple'],
@@ -80,16 +85,16 @@ SOIL_INFO = {
     },
     'Loam_Soil': {
         'display_name': 'Loam Soil',
-        'description': 'Ideal mix of sand, silt and clay. Best soil for farming with excellent drainage and water retention balance.',
+        'description': 'Ideal mix of sand, silt and clay. Best soil for farming.',
         'moisture_level': 'Moderate (40-60%)',
         'ideal_moisture': 50,
-        'crops': ['Almost all crops', 'Wheat', 'Corn', 'Vegetables', 'Fruits', 'Flowers'],
+        'crops': ['Almost all crops', 'Wheat', 'Corn', 'Vegetables', 'Fruits'],
         'characteristics': 'Best soil for agriculture, balanced texture, high fertility',
         'found_in': 'Agricultural plains, temperate regions worldwide'
     },
     'Arid_Soil': {
         'display_name': 'Arid Soil',
-        'description': 'Dry desert soil with very low organic matter and high salt content. Found in arid and semi-arid regions.',
+        'description': 'Dry desert soil with very low organic matter and high salt content.',
         'moisture_level': 'Very Low (10-25%)',
         'ideal_moisture': 18,
         'crops': ['Millets', 'Barley', 'Cotton', 'Dates', 'Drought-resistant crops'],
@@ -98,16 +103,16 @@ SOIL_INFO = {
     },
     'Mountain_Soil': {
         'display_name': 'Mountain Soil',
-        'description': 'Found in hilly and mountainous areas. Acidic in nature and rich in organic matter but shallow depth.',
+        'description': 'Found in hilly and mountainous areas. Acidic and rich in organic matter.',
         'moisture_level': 'High (50-70%)',
         'ideal_moisture': 60,
-        'crops': ['Tea', 'Coffee', 'Fruits', 'Potatoes', 'Medicinal plants', 'Spices'],
+        'crops': ['Tea', 'Coffee', 'Fruits', 'Potatoes', 'Medicinal plants'],
         'characteristics': 'Acidic, rich in humus, shallow, prone to erosion',
         'found_in': 'Himalayas, Western Ghats, Northeastern hills'
     },
     'Yellow_Soil': {
         'display_name': 'Yellow Soil',
-        'description': 'Yellow colored due to iron oxidation in hydrated form. Found in humid regions with moderate rainfall.',
+        'description': 'Yellow colored due to iron oxidation. Found in humid regions.',
         'moisture_level': 'Moderate (35-55%)',
         'ideal_moisture': 45,
         'crops': ['Rice', 'Sweet Potato', 'Corn', 'Tobacco', 'Groundnut'],
@@ -116,10 +121,10 @@ SOIL_INFO = {
     },
     'Cinder_Soil': {
         'display_name': 'Cinder Soil',
-        'description': 'Volcanic origin soil with excellent drainage. Rich in minerals but low in organic matter.',
+        'description': 'Volcanic origin soil with excellent drainage. Rich in minerals.',
         'moisture_level': 'Low-Moderate (25-45%)',
         'ideal_moisture': 35,
-        'crops': ['Grapes', 'Olives', 'Lavender', 'Herbs', 'Succulents', 'Cacti'],
+        'crops': ['Grapes', 'Olives', 'Lavender', 'Herbs', 'Succulents'],
         'characteristics': 'Excellent drainage, high mineral content, low water retention',
         'found_in': 'Volcanic regions, parts of Deccan plateau'
     }
@@ -138,20 +143,22 @@ def predict():
 
         img_bytes = base64.b64decode(img_data)
         img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-        img = img.resize(IMG_SIZE)
 
-        arr = np.array(img, dtype=np.float32)
-        arr = preprocess_input(arr)
-        arr = np.expand_dims(arr, axis=0)
+        # Preprocess
+        arr = preprocess_image(img)
 
-        preds = model.predict(arr)[0]
+        # Run TFLite inference
+        interpreter.set_tensor(input_details[0]['index'], arr)
+        interpreter.invoke()
+        preds = interpreter.get_tensor(output_details[0]['index'])[0]
+
         pred_idx = int(np.argmax(preds))
         pred_label = idx_to_label[pred_idx]
         confidence = float(preds[pred_idx]) * 100
 
         soil = SOIL_INFO.get(pred_label, {})
 
-        # Top 3 predictions
+        # Top 3
         top3_idx = np.argsort(preds)[::-1][:3]
         top3 = [
             {
@@ -180,7 +187,7 @@ def predict():
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'ok', 'model': 'ResNet50', 'classes': len(idx_to_label)})
+    return jsonify({'status': 'ok', 'model': 'ResNet50-TFLite', 'classes': len(idx_to_label)})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
