@@ -3,7 +3,10 @@ function renderSoilGrid() {
   grid.innerHTML = soils.map(s => `
     <div class="soil-card" onclick="showSoilDetail('${s.id}')">
       <div class="soil-card-img">
-        <img src="soilsense_backend/assests/images/${s.id}.avif" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius) var(--radius) 0 0;" onerror="this.style.display='none'">
+        <img src="assests/images/${s.id}.avif" 
+             alt="${s.name}" 
+             style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius) var(--radius) 0 0;" 
+             onerror="this.src='assests/images/${s.id}.jpg'">
       </div>
       <div class="soil-card-body">
         <h3>${s.name}</h3>
@@ -24,7 +27,7 @@ function showSoilDetail(id) {
   document.getElementById('soil-detail-page').classList.add('active');
 
   const heroEl = document.getElementById('detail-hero');
-  heroEl.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('soilsense_backend/assests/images/${s.id}.avif')`;
+  heroEl.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('assests/images/${s.id}.avif')`;
   heroEl.style.backgroundSize = 'cover';
   heroEl.style.backgroundPosition = 'center';
 
